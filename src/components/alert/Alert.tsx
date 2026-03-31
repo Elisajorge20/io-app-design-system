@@ -1,227 +1,131 @@
-import { JSX, forwardRef } from "react";
-import {
-  ColorValue,
-  GestureResponderEvent,
-  Pressable,
-  View,
-  ViewStyle
-} from "react-native";
-import Animated from "react-native-reanimated";
-import { useIOThemeContext } from "../../context";
-import { IOVisualCostants } from "../../core";
-import { IOColors, hexToRgba } from "../../core/IOColors";
-import { IOAlertRadius } from "../../core/IOShapes";
-import { IOAlertSpacing, IOSpacer } from "../../core/IOSpacing";
-import { useScaleAnimation } from "../../hooks";
-import { useIOFontDynamicScale } from "../../utils/accessibility";
-import { WithTestID } from "../../utils/types";
-import { IOIconSizeScale, IOIcons, Icon } from "../icons";
-import { HStack, VStack } from "../layout";
-import { Body, ButtonText } from "../typography";
+'use client'
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-const ICON_SIZE: IOIconSizeScale = 24;
+export default function ReportPage() {
+  const router = useRouter();
 
-const [padding, paddingFullWidth] = IOAlertSpacing;
+  // Estados para capturar as escolhas do utilizador
+  const [emergencia, setEmergencia] = useState('Roubo / Assalto');
+  const [provincia, setProvincia] = useState('Maputo Cidade');
+  const [detalhes, setDetalhes] = useState('');
 
-type AlertProps = WithTestID<{
-  variant: "error" | "warning" | "info" | "success";
-  content: string;
-  fullWidth?: boolean;
-  accessibilityLabel?: string;
-  accessibilityHint?: string;
-}>;
+  // Estilo padronizado para os campos (UX Mobile-First)
+  const fieldStyle = {
+    width: '100%',
+    padding: '16px',
+    backgroundColor: '#1e293b',
+    color: 'white',
+    border: '1px solid #334155',
+    borderRadius: '14px',
+    fontSize: '16px',
+    marginBottom: '20px',
+    outline: 'none',
+    display: 'block'
+  };
 
-type AlertActionProps =
-  | {
-      action?: string;
-      onPress: (event: GestureResponderEvent) => void;
+  const handleEnvio = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!detalhes.trim()) {
+      alert("Por favor, descreva brevemente a situação para ajudar as autoridades.");
+      return;
     }
-  | {
-      action?: never;
-      onPress?: never;
-    };
+    // Simulação de envio para a PRM/Emergência
+    alert(`🚨 ALERTA ENVIADO COM SUCESSO!\n\nTipo: ${emergencia}\nLocal: ${provincia}\n\nAs autoridades locais e unidades de resposta foram notificadas.`);
+    router.push('/');
+  };
 
-type AlertType = AlertProps & AlertActionProps;
+  return (
+    <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'system-ui' }}>
+      
+      {/* Header Profissional */}
+      <header style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid #334155', background: '#1e293b' }}>
+        <Link href="/" style={{ textDecoration: 'none', fontSize: '24px', color: '#ef4444', fontWeight: 'bold' }}>←</Link>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>Novo Relatório de Emergência</h1>
+      </header>
 
-type VariantStates = {
-  icon: IOIcons;
-  background: ColorValue;
-  foreground: IOColors;
-};
+      <main style={{ padding: '25px 20px' }}>
+        <form onSubmit={handleEnvio}>
+          
+          {/* TIPO DE INCIDENTE */}
+          <label style={{ display: 'block', fontSize: '13px', color: '#ef4444', fontWeight: 'bold', marginBottom: '8px' }}>
+            TIPO DE EMERGÊNCIA
+          </label>
+          <select 
+            value={emergencia}
+            onChange={(e) => setEmergencia(e.target.value)}
+            style={fieldStyle}
+          >
+            <option value="Roubo / Assalto">Roubo / Assalto</option>
+            <option value="Sequestro / Rapto">Sequestro / Rapto</option>
+            <option value="Tentativa de Violação">Tentativa de Violação</option>
+            <option value="Violência / Agressão">Violência / Agressão</option>
+            <option value="Ferimento Grave">Ferimento Grave</option>
+            <option value="Acidente de Viação">Acidente de Viação</option>
+            <option value="Outros">Outros</option>
+          </select>
 
-// COMPONENT CONFIGURATION
+          {/* LOCALIZAÇÃO (TODAS AS 11 PROVÍNCIAS DE MOÇAMBIQUE) */}
+          <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '8px' }}>
+            PROVÍNCIA DA OCORRÊNCIA
+          </label>
+          <select 
+            value={provincia}
+            onChange={(e) => setProvincia(e.target.value)}
+            style={fieldStyle}
+          >
+            <option value="Maputo Cidade">Maputo Cidade</option>
+            <option value="Maputo Província">Maputo Província</option>
+            <option value="Gaza">Gaza</option>
+            <option value="Inhambane">Inhambane</option>
+            <option value="Sofala">Sofala</option>
+            <option value="Manica">Manica</option>
+            <option value="Tete">Tete</option>
+            <option value="Zambézia">Zambézia</option>
+            <option value="Nampula">Nampula</option>
+            <option value="Niassa">Niassa</option>
+            <option value="Cabo Delgado">Cabo Delgado</option>
+          </select>
 
-const mapVariantStatesLightMode: Record<
-  NonNullable<AlertType["variant"]>,
-  VariantStates
-> = {
-  error: {
-    icon: "errorFilled",
-    background: IOColors["error-100"],
-    foreground: "error-850"
-  },
-  warning: {
-    icon: "warningFilled",
-    background: IOColors["warning-100"],
-    foreground: "warning-850"
-  },
-  info: {
-    icon: "infoFilled",
-    background: IOColors["info-100"],
-    foreground: "info-850"
-  },
-  success: {
-    icon: "success",
-    background: IOColors["success-100"],
-    foreground: "success-850"
-  }
-};
+          {/* DESCRIÇÃO DOS DETALHES */}
+          <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '8px' }}>
+            DETALHES ADICIONAIS
+          </label>
+          <textarea 
+            placeholder="Ex: Cor do veículo, número de suspeitos, ponto de referência..."
+            value={detalhes}
+            onChange={(e) => setDetalhes(e.target.value)}
+            style={{ ...fieldStyle, height: '120px', resize: 'none' }}
+          />
 
-const bgOpacityDarkMode = 0.2;
+          {/* AVISO DE SEGURANÇA E GPS */}
+          <div style={{ padding: '15px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', border: '1px solid #10b981', marginBottom: '30px', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: '#10b981', fontWeight: '600' }}>
+              📍 Sua localização GPS exata será enviada com este alerta.
+            </p>
+          </div>
 
-const mapVariantStatesDarkMode: Record<
-  NonNullable<AlertType["variant"]>,
-  VariantStates
-> = {
-  error: {
-    icon: "errorFilled",
-    background: hexToRgba(IOColors["error-400"], bgOpacityDarkMode),
-    foreground: "error-100"
-  },
-  warning: {
-    icon: "warningFilled",
-    background: hexToRgba(IOColors["warning-400"], bgOpacityDarkMode),
-    foreground: "warning-100"
-  },
-  info: {
-    icon: "infoFilled",
-    background: hexToRgba(IOColors["info-400"], bgOpacityDarkMode),
-    foreground: "info-100"
-  },
-  success: {
-    icon: "success",
-    background: hexToRgba(IOColors["success-400"], bgOpacityDarkMode),
-    foreground: "success-100"
-  }
-};
-
-export const Alert = forwardRef<View, AlertType>(
-  (
-    {
-      variant,
-      content,
-      action,
-      onPress,
-      fullWidth = false,
-      accessibilityHint,
-      testID
-    }: AlertType,
-    viewRef
-  ): JSX.Element => {
-    const { onPressIn, onPressOut, scaleAnimatedStyle } =
-      useScaleAnimation("medium");
-    const { dynamicFontScale, spacingScaleMultiplier } =
-      useIOFontDynamicScale();
-    const { themeType } = useIOThemeContext();
-
-    const paddingDefaultVariant: ViewStyle = {
-      padding,
-      borderRadius: IOAlertRadius * dynamicFontScale * spacingScaleMultiplier,
-      borderCurve: "continuous"
-    };
-
-    const mapVariantStates =
-      themeType === "light"
-        ? mapVariantStatesLightMode
-        : mapVariantStatesDarkMode;
-
-    const renderMainBlock = () => (
-      <HStack
-        space={IOVisualCostants.iconMargin as IOSpacer}
-        allowScaleSpacing
-        style={{ alignItems: "center" }}
-      >
-        <Icon
-          allowFontScaling
-          name={mapVariantStates[variant].icon}
-          size={ICON_SIZE}
-          color={mapVariantStates[variant].foreground}
-        />
-        {/* Sadly we don't have specific alignments style for text
-      in React Native, like `text-box-trim` for CSS. So we
-      have to put these magic numbers after manual adjustments.
-      Tested on both Android and iOS. */}
-        <View
-          style={{
-            marginTop: -4 * dynamicFontScale,
-            marginBottom: -4 * dynamicFontScale,
-            flex: 1
-          }}
-        >
-          <VStack space={8} allowScaleSpacing>
-            <Body
-              color={mapVariantStates[variant].foreground}
-              weight={"Regular"}
-              accessibilityRole="text"
-            >
-              {content}
-            </Body>
-            {action && (
-              <ButtonText
-                color={mapVariantStates[variant].foreground}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {action}
-              </ButtonText>
-            )}
-          </VStack>
-        </View>
-      </HStack>
-    );
-
-    const StaticComponent = () => (
-      <View
-        ref={viewRef}
-        style={[
-          fullWidth ? { padding } : paddingDefaultVariant,
-          { backgroundColor: mapVariantStates[variant].background }
-        ]}
-        testID={testID}
-        accessible={false}
-        accessibilityRole="alert"
-        accessibilityHint={accessibilityHint}
-      >
-        {renderMainBlock()}
-      </View>
-    );
-
-    const PressableButton = () => (
-      <Pressable
-        ref={viewRef}
-        testID={testID}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onTouchEnd={onPressOut}
-        // A11y related props
-        accessible={true}
-        accessibilityHint={accessibilityHint}
-        accessibilityRole={"button"}
-      >
-        <Animated.View
-          style={[
-            fullWidth ? { padding: paddingFullWidth } : paddingDefaultVariant,
-            { backgroundColor: mapVariantStates[variant].background },
-            // Disable pressed animation when component is full width
-            !fullWidth && scaleAnimatedStyle
-          ]}
-        >
-          {renderMainBlock()}
-        </Animated.View>
-      </Pressable>
-    );
-
-    return action ? <PressableButton /> : <StaticComponent />;
-  }
-);
+          {/* BOTÃO DE SUBMISSÃO FINAL */}
+          <button 
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '20px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '16px',
+              fontWeight: '900',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)'
+            }}
+          >
+            CONFIRMAR E ENVIAR AGORA
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+}
